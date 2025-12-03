@@ -2,6 +2,7 @@ import cv2
 import ultralytics
 import numpy as np
 
+
 model = ultralytics.YOLO('yolo11s-pose.pt')
 #
 # img = cv2.imread('data/lesson_pose/human.jpg')
@@ -93,77 +94,100 @@ model = ultralytics.YOLO('yolo11s-pose.pt')
 # Отримайте перший кадр та виділіть основні точки.
 # Отримайте координати однієї з долонь та лівого коліна.
 # Вважайте що людина присіла, коли її рука опустилась нижче коліна, і піднялась коли її рука опинилась вище коліна.
-# Оскільки на відео є декілька людей то обирайте ту, яка
-# знаходиться найближче, тобто в якої найбільша площа
+# Оскільки на відео є декілька людей то обирайте ту, яка знаходиться найближче, тобто в якої найбільша площа
 # рамки(можете потренуватись на 200-му кадрі)
 
-orig_video = cv2.VideoCapture('data/lesson_pose/sitting.mp4')
-move_down = True
-counter = 0
-
-while True:
-    success, img = orig_video.read()
-
-    if not success:
-        break
-
-    model_results = model.predict(img)
-    model_result = model_results[0]
-    keypoints = model_result.keypoints[0]
-    xy = keypoints.xy
-    print(xy.shape)
-
-    left_hand = xy[0, 9]
-    y_left_hand = left_hand[1]
-
-    right_hand = xy[0, 10]
-    y_right_hand = right_hand[1]
-
-    left_knee = xy[0, 13]
-    y_left_knee = left_knee[1]
-
-    right_knee = xy[0, 14]
-    y_right_knee = right_knee[1]
-
-    # человек присел
-    if y_left_hand > y_left_knee and move_down:
-        move_down = False
-        counter += 0.5
-
-    if y_left_hand < y_left_knee and not move_down:
-        move_down = True
-        counter += 0.5
-
-    cv2.putText(
-        img,                  # зображення
-        f'Counter: {counter}',    # текст
-        (20, 20),     # верхний левый угол
-        cv2.FONT_HERSHEY_SIMPLEX,    # шрифт
-        0.8,          # розмір шрифту(відсоток до стандарту)
-        (255, 255, 255),      # колір у bgr(тут чорний)
-        2           # товщина ліній
-
-    )
-
-    cv2.imshow("img", img)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
+# orig_video = cv2.VideoCapture('data/lesson_pose/sitting.mp4')
+# move_down = True
+# counter = 0
+#
+# def get_max_index(model_result):
+#     # width and height for each person
+#     xy_boxes = model_result.boxes.xywh
+#     persons_width = xy_boxes[:, 2]
+#     persons_height = xy_boxes[:, 3]
+#
+#     area = persons_width * persons_height
+#     print(area)
+#     area = area.numpy()
+#     max_index = np.argmax(area)
+#     return max_index
+#
+#
+# while True:
+#     success, img = orig_video.read()
+#
+#     if not success:
+#         break
+#
+#     model_results = model.predict(img)
+#     model_result = model_results[0]
+#
+#     max_index = get_max_index(model_result)
+#     img_with_plot = model_result.plot()
+#
+#     keypoints = model_result.keypoints[max_index]
+#     xy = keypoints.xy
+#     print(xy.shape)
+#
+#     left_hand = xy[0, 9]
+#     y_left_hand = left_hand[1]
+#
+#     right_hand = xy[0, 10]
+#     y_right_hand = right_hand[1]
+#
+#     left_knee = xy[0, 13]
+#     y_left_knee = left_knee[1]
+#
+#     right_knee = xy[0, 14]
+#     y_right_knee = right_knee[1]
+#
+#     # человек присел
+#     y_upper_knee = min(y_left_knee, y_right_knee)
+#
+#     if y_left_hand > y_upper_knee and move_down:
+#         move_down = False
+#         counter += 0.5
+#
+#     if y_left_hand < y_upper_knee and not move_down:
+#         move_down = True
+#         counter += 0.5
+#
+#     cv2.putText(
+#         img_with_plot,                  # зображення
+#         f'Counter: {counter}',    # текст
+#         (20, 20),     # верхний левый угол
+#         cv2.FONT_HERSHEY_SIMPLEX,    # шрифт
+#         0.8,          # розмір шрифту(відсоток до стандарту)
+#         (255, 255, 255),      # колір у bgr(тут чорний)
+#         2           # товщина ліній
+#
+#     )
+#
+#     cv2.imshow("img_with_plot", img_with_plot)
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
 
 
 # Завдання 2
 # Відкрийте відео data/lesson_pose/hopak.mp4
 # Покажіть відео добавляючи на кожен кадр назву руху
-# Практичне завдання
 # Figure 2 Руки в сторону
-# Figure 1 Руки в
-# боки
-# Figure 3 Одна рука
-# вгору
+# Figure 1 Руки в боки
+# Figure 3 Одна рука вгору
+
+
+
+
+
+
+
+
+
+
+
 # Завдання 3
 # Відкрийте відео data/lesson_pose/hands.mp4
 # Покажіть відео змінюючи яскравість відео, в залежності
 # від відстані між долонями. За одиницю виміру візьміть
 # відстань між плечима
-
-
