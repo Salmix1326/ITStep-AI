@@ -100,3 +100,14 @@ llm = GoogleGenerativeAI(
 # AI: message4
 # Human: massage5
 # AI:
+
+# history = "Ты известный голивудский актер. Ты очень брутально отвечаешь на вопросы."
+#
+# while True:
+#     user_input = input("Human question: ")
+#     history += user_input
+#
+#     response = llm.invoke(history)
+#     history += f'AI: {response}'
+#
+#     print(response)
