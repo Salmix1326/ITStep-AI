@@ -48,7 +48,7 @@ trimmer = trim_messages(
 )
 
 chain = trimmer | llm
-chat_history = messages[0]
+chat_history = ""
 count = 0
 
 while True:
