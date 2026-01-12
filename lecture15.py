@@ -63,7 +63,6 @@ agent = create_react_agent(
     tools=[]
 )
 
-
 user_query = st.chat_input("Ваше повідомлення")
 
 # якщо це початок то створити історію в session state
@@ -115,4 +114,3 @@ for message in st.session_state['history']:
 
     with st.chat_message(role):
         st.markdown(text)
-
