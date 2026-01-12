@@ -38,6 +38,7 @@ import os
 import dotenv
 
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import (
     HumanMessage,
     AIMessage,
@@ -55,6 +56,13 @@ llm = ChatGoogleGenerativeAI(
     model='gemini-2.5-flash-lite',
     api_key=api_key,
 )
+
+# створення агента
+agent = create_react_agent(
+    model=llm,  # мовна модель
+    tools=[]
+)
+
 
 user_query = st.chat_input("Ваше повідомлення")
 
@@ -79,12 +87,16 @@ if user_query:
     # добавляємо до історії повідомлень
     st.session_state['history'].append(human_message)
 
+    input_data = {
+        'messages':st.session_state['history']
+    }
+
     # запускаємо модель
-    response = llm.invoke(st.session_state['history'])
+    response = agent.invoke(input_data)
 
     # response -- AIMessage
     # добавляємо до історії повідомлень
-    st.session_state['history'].append(response)
+    st.session_state['history'] = response['messages']
 
 # вывод всей истории общения
 for message in st.session_state['history']:
