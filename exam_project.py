@@ -3,6 +3,10 @@ import mediapipe as mp
 import math
 import time
 import win32com.client
+from langchain_google_genai import GoogleGenerativeAI
+from langchain.prompts import PromptTemplate
+import dotenv
+import os
 
 # Настройка MediaPipe
 mp_hands = mp.solutions.hands
@@ -13,6 +17,7 @@ cap = cv2.VideoCapture(0)
 # Таймер удержания жестов
 gesture_start_time = None
 required_hold = 1  # время удержания в секундах
+is_generating_text = None
 
 # PowerPoint
 ppt = win32com.client.Dispatch("PowerPoint.Application")
@@ -42,6 +47,30 @@ def angle(a, b, c):
     if mag_ab * mag_cb == 0:
         return 180  # защита от деления на ноль
     return math.degrees(math.acos(dot / (mag_ab * mag_cb)))
+
+# файл API ключей
+dotenv.load_dotenv()
+
+# ключ
+api_key = os.getenv('GEMINI_API_KEY')
+
+llm = GoogleGenerativeAI(
+    model='gemini-3-flash',
+    api_key=api_key,
+)
+
+# запрос к модели
+prompt = PromptTemplate.from_template(
+    """
+    Ты - специалист, который помогает делать презентации людям. Тебе будут давать заголовки на слайдах. 
+    Ты будешь писать подходящий текст к этому заголовку. Отвечай только содержимым, без дополнительного общения.
+    Пиши 3-5 предложений сплошным текстом без модификации текста каким либо способом
+    
+    {current_title}
+    """
+)
+
+chain = prompt | llm
 
 # ---------------------- Основной цикл ----------------------
 with mp_hands.Hands(
@@ -149,6 +178,10 @@ with mp_hands.Hands(
                 current_time = time.time()
 
                 if is_gesture_left or is_gesture_right or (thumb_up and fingers_target_angle):
+                    if is_generating_text:
+                        gesture_start_time = None
+                        continue
+
                     if gesture_start_time is None:
                         gesture_start_time = current_time
                     elif (current_time - gesture_start_time) >= required_hold:
@@ -162,8 +195,17 @@ with mp_hands.Hands(
 
                         else:  # большой палец вверх
                             current_slide = window.View.Slide
-                            current_slide.Shapes.Title.TextFrame.TextRange.Text = "Магия! Здесь появился текст!!!"
-                            current_slide.Shapes.Placeholders(2).TextFrame.TextRange.Text = "Новый текст на активном слайде"
+                            current_title = current_slide.Shapes.Title.TextFrame.TextRange.Text
+                            is_generating_text = True
+
+                            response = chain.invoke(
+                                {
+                                    "current_title": current_title,
+                                }
+                            )
+
+                            current_slide.Shapes.Placeholders(2).TextFrame.TextRange.Text = response
+                            is_generating_text = None
                             prs.Save()
                             print("Gesture Thumb Up")
 
