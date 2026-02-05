@@ -54,6 +54,7 @@ dotenv.load_dotenv()
 # ключ
 api_key = os.getenv('GEMINI_API_KEY')
 
+# подключение модели
 llm = GoogleGenerativeAI(
     model='gemini-3-flash',
     api_key=api_key,
@@ -178,10 +179,13 @@ with mp_hands.Hands(
                 current_time = time.time()
 
                 if is_gesture_left or is_gesture_right or (thumb_up and fingers_target_angle):
+
+                    # проверка на генерацию текста с запретом на смену слайдов
                     if is_generating_text:
                         gesture_start_time = None
                         continue
 
+                    # таймер
                     if gesture_start_time is None:
                         gesture_start_time = current_time
                     elif (current_time - gesture_start_time) >= required_hold:
