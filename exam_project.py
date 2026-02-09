@@ -7,6 +7,8 @@ from langchain_google_genai import GoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 import dotenv
 import os
+from pydantic import BaseModel
+import json
 
 # Настройка MediaPipe
 mp_hands = mp.solutions.hands
@@ -18,6 +20,40 @@ cap = cv2.VideoCapture(0)
 gesture_start_time = None
 required_hold = 1  # время удержания в секундах
 is_generating_text = None
+
+# переменные граничных значений
+threshold_z = 0.03 # глубина пальцев
+threshold_angle = 75 # угол фаланг
+threshold_thumb_extended_left = 0.03 # большой палец выпрямлен влево
+threshold_thumb_extended_right = -0.03 # большой палец выпрямлен вправо
+threshold_thumb_up = -0.1 # большой палец вверх
+
+# сохранение переменных
+class Thresholds(BaseModel):
+    threshold_z: float
+    threshold_angle: int
+    threshold_thumb_extended_left: float
+    threshold_thumb_extended_right: float
+    threshold_thumb_up: float
+
+# объект
+thresholds_config = Thresholds(
+    threshold_z=0.03,
+    threshold_angle=75,
+    threshold_thumb_extended_left=0.03,
+    threshold_thumb_extended_right=-0.03,
+    threshold_thumb_up=-0.1
+)
+
+# сохранение
+with open("thresholds.json", "w", encoding="utf-8") as f:
+    json.dump(thresholds_config.model_dump(), f, indent=4, ensure_ascii=False)
+
+# загрузка
+with open("thresholds.json", "r", encoding="utf-8") as f:
+    data = json.load(f)
+
+thresholds_main = Thresholds(**data)
 
 # PowerPoint
 ppt = win32com.client.Dispatch("PowerPoint.Application")
@@ -148,11 +184,9 @@ with mp_hands.Hands(
 
                 # Проверка глубины пальцев
                 avg_z = (index_tip.z + middle_tip.z + ring_tip.z + pinky_tip.z + thumb_tip.z) / 5
-                threshold_z = 0.03
                 fingers_aligned = all(abs(lm.z - avg_z) < threshold_z for lm in [thumb_tip, index_tip, middle_tip, ring_tip, pinky_tip])
 
                 # Углы фаланг
-                threshold_angle = 75
                 fingers_target_angle = (
                     angle(index_dip, index_pip, index_mcp) < threshold_angle and
                     angle(middle_dip, middle_pip, middle_mcp) < threshold_angle and
@@ -161,15 +195,15 @@ with mp_hands.Hands(
                 )
 
                 # Большой палец в выпрямлен
-                is_thumb_extended_left = thumb_tip.x - thumb_mcp.x > 0.03
-                is_thumb_extended_right = thumb_tip.x - thumb_mcp.x < -0.03
+                is_thumb_extended_left = thumb_tip.x - thumb_mcp.x > threshold_thumb_extended_left
+                is_thumb_extended_right = thumb_tip.x - thumb_mcp.x < threshold_thumb_extended_right
 
                 # Большой палец в сторону
                 thumb_on_side_left = thumb_tip.x > max(index_mcp.x, pinky_mcp.x)
                 thumb_on_side_right = thumb_tip.x < min(index_mcp.x, pinky_mcp.x)
 
                 # Большой палец вверх
-                thumb_up = (thumb_tip.y - thumb_mcp.y) < -0.1
+                thumb_up = (thumb_tip.y - thumb_mcp.y) < threshold_thumb_up
 
                 # Проверка на выполнение жестов
                 is_gesture_left = fingers_folded_for_left and fingers_aligned and is_thumb_extended_left and thumb_on_side_left and fingers_target_angle

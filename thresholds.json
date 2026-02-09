@@ -1,0 +1,7 @@
+{
+    "threshold_z": 0.03,
+    "threshold_angle": 75,
+    "threshold_thumb_extended_left": 0.03,
+    "threshold_thumb_extended_right": -0.03,
+    "threshold_thumb_up": -0.1
+}
