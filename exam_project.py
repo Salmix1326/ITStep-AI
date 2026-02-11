@@ -21,11 +21,11 @@ required_hold = 1  # время удержания в секундах
 is_generating_text = None
 
 class Thresholds(BaseSettings):
-    threshold_z: float = 0.03
-    threshold_angle: int = 75
-    threshold_thumb_extended_left: float = 0.03
-    threshold_thumb_extended_right: float = -0.03
-    threshold_thumb_up: float = -0.1
+    threshold_z: float
+    threshold_angle: int
+    threshold_thumb_extended_left: float
+    threshold_thumb_extended_right: float
+    threshold_thumb_up: float
 
     # файл конфигурации
     model_config = SettingsConfigDict(
